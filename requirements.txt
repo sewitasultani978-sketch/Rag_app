@@ -1,0 +1,23 @@
+# python and notebook libraries
+ipykernel
+python-dotenv
+
+# Gemini
+google-genai
+
+#LangChain
+langchain
+langchain-text-splitters 
+langchain-community 
+bs4
+langchain[google-genai]
+langchain-core 
+langchain-google-vertexai
+langchain-chroma
+langchain_experimental
+
+# Python
+pypdf
+tabulate
+
+
