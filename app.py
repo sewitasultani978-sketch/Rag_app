@@ -138,8 +138,7 @@ st.markdown("---")
 # =========================
 # Read dataset
 # =========================
-
-df = pd.read_csv("Rag_app/Data/cleaned_dataset.csv")
+df = pd.read_csv("Data/cleaned_dataset.csv")
 
 # =========================
 # Create embeddings model
