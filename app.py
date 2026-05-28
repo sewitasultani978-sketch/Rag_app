@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from dotenv import load_dotenv
-import os
 
 from langchain_core.documents import Document
 from langchain_google_genai import (
@@ -10,26 +9,23 @@ from langchain_google_genai import (
 )
 from langchain_community.vectorstores import Chroma
 
-# =========================
-# Load API key
-# =========================
 
+# Laddar API-nyckeln
 load_dotenv(".env")
 
-# =========================
-# Spotify Theme UI
-# =========================
 
+# Inställningar för sidan
 st.set_page_config(
     page_title="Spotify RAG App",
     page_icon="🎵",
     layout="centered"
 )
 
+
+# Spotify-inspirerad design
 st.markdown("""
 <style>
 
-/* Background */
 .stApp {
     background:
         linear-gradient(rgba(0,0,0,0.82), rgba(0,0,0,0.92)),
@@ -40,92 +36,68 @@ st.markdown("""
     color: white;
 }
 
-/* Main card */
 .block-container {
     background-color: rgba(18,18,18,0.78);
     padding: 3rem;
     border-radius: 25px;
     backdrop-filter: blur(12px);
-    box-shadow: 0 0 25px rgba(0,0,0,0.5);
     margin-top: 40px;
 }
 
-/* Titles */
 h1, h2, h3 {
     color: white;
     text-align: center;
 }
 
-/* Subtitle */
 .subtitle {
     text-align: center;
     color: #b3b3b3;
-    font-size: 20px;
+    font-size: 18px;
     margin-bottom: 30px;
 }
 
-/* Divider */
-hr {
-    border: 1px solid #282828;
-}
-
-/* Input field */
 .stTextInput > div > div > input {
     background-color: #282828;
     color: white;
     border-radius: 12px;
     border: 2px solid #1DB954;
     padding: 14px;
-    font-size: 16px;
 }
 
-/* Input label */
 label {
     color: white !important;
     font-weight: bold;
 }
 
-/* Button */
 .stButton > button {
     background: linear-gradient(90deg, #1DB954, #1ed760);
     color: white;
     border-radius: 50px;
     border: none;
-    padding: 12px 30px;
+    padding: 12px 28px;
     font-weight: bold;
-    font-size: 16px;
     transition: 0.3s;
 }
 
-/* Button hover */
 .stButton > button:hover {
     transform: scale(1.05);
-    box-shadow: 0 0 20px #1DB954;
+    box-shadow: 0 0 18px #1DB954;
     color: black;
 }
 
-/* Response box */
 .response-box {
     background-color: rgba(24,24,24,0.95);
     padding: 25px;
     border-radius: 18px;
-    border-left: 6px solid #1DB954;
-    margin-top: 30px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.4);
-}
-
-/* Spinner */
-.stSpinner > div {
-    color: #1DB954;
+    border-left: 5px solid #1DB954;
+    margin-top: 25px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# =========================
-# Title
-# =========================
 
+# Titel
 st.markdown("# 🎵 Spotify RAG Application")
 
 st.markdown(
@@ -135,44 +107,35 @@ st.markdown(
 
 st.markdown("---")
 
-# =========================
-# Read dataset
-# =========================
+
+# Läser in datasetet
 df = pd.read_csv("Data/cleaned_dataset.csv")
 
-# =========================
-# Create embeddings model
-# =========================
 
+# Embeddings-modell
 embeddings = GoogleGenerativeAIEmbeddings(
     model="models/gemini-embedding-001"
 )
 
-# =========================
-# Create combined text
-# =========================
 
+# Skapar text som används för sökning
 df["text"] = (
-    "Track name: " + df["track_name"].astype(str)
+    "Track: " + df["track_name"].astype(str)
     + ". Artist: " + df["artists"].astype(str)
     + ". Album: " + df["album_name"].astype(str)
     + ". Genre: " + df["track_genre"].astype(str)
     + ". Popularity: " + df["popularity"].astype(str)
 )
 
-# =========================
-# Create documents
-# =========================
 
-documents = []
+# Gör om rader till dokument
+documents = [
+    Document(page_content=text)
+    for text in df["text"][:10]
+]
 
-for text in df["text"][:10]:
-    documents.append(Document(page_content=text))
 
-# =========================
-# Create vector database
-# =========================
-
+# Skapar vektordatabas
 vectorstore = Chroma.from_documents(
     documents=documents,
     embedding=embeddings,
@@ -181,26 +144,17 @@ vectorstore = Chroma.from_documents(
 
 retriever = vectorstore.as_retriever()
 
-# =========================
-# Load Gemini model
-# =========================
 
+# Gemini-modell
 llm = ChatGoogleGenerativeAI(
     model="gemini-flash-latest",
     temperature=0.3
 )
 
-# =========================
-# User input
-# =========================
 
-question = st.text_input(
-    "🔍 Skriv en fråga om musik:"
-)
+# Frågeruta
+question = st.text_input("🔍 Skriv en fråga om musik:")
 
-# =========================
-# Generate answer
-# =========================
 
 if st.button("🎧 Generera svar"):
 
@@ -214,7 +168,7 @@ if st.button("🎧 Generera svar"):
 
                 context = docs[0].page_content
 
-                final_prompt = f"""
+                prompt = f"""
                 Du är en musikexpert.
 
                 Context:
@@ -224,7 +178,7 @@ if st.button("🎧 Generera svar"):
                 {question}
                 """
 
-                response = llm.invoke(final_prompt)
+                response = llm.invoke(prompt)
 
                 st.markdown(
                     f"""
